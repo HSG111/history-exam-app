@@ -1,261 +1,137 @@
-# Expo App + Express.js
+# 历史备考助手（History Exam App）
 
-## 目录结构规范（严格遵循）
+基于 **高中历史教材 + 历年全国/湖北高考历史真题** 打造的移动端备考应用。学生可以**按关键词搜索历史题库**、**上传答题卡图片自动批改**，并随时回看批改报告。
 
-当前仓库是一个 monorepo（基于 pnpm 的 workspace）
+---
 
-- Expo 代码在 client 目录，Express.js 代码在 server 目录
-- 本模板默认无 Tab Bar，可按需改造
+## ✨ 功能特性
 
-├── client/                     # React Native 前端代码
-│   ├── app/                    # Expo Router 路由目录（仅路由配置）
-│   │   ├── _layout.tsx         # 根布局文件（必需，务必阅读）
-│   │   └── index.tsx           # 首页
-│   ├── screens/                # 页面实现目录（与 app/ 路由对应）
-│   │   └── demo/               # 示例页面
-│   │       └── index.tsx
-│   ├── components/             # 可复用组件
-│   │   └── Screen.tsx          # 页面容器组件（必用）
-│   ├── hooks/                  # 自定义 Hooks
-│   ├── contexts/               # React Context 代码
-│   ├── utils/                  # 工具函数
-│   ├── assets/                 # 静态资源
-|   └── package.json            # Expo 应用 package.json
-├── server/                     # 服务端代码根目录 (Express.js)
-|   ├── src/
-│   │   └── index.ts            # 服务端入口文件
-|   └── package.json            # 服务端 package.json
-├── package.json
-├── .cozeproj                   # 预置脚手架脚本（禁止修改）
-└── .coze                       # 配置文件（禁止修改）
+| 功能 | 说明 |
+| --- | --- |
+| 🔍 题库搜索 | 按关键词、题型(单选/多选/材料)、年份来源筛选检索；题目含题干、选项、参考答案与解析 |
+| ✍️ 智能批改 | 选择试卷 → 上传答题卡照片 → AI 视觉模型读取作答并与答案要点对照，逐题给分、判对错、附点评，自动汇总总分 |
+| 📁 批改记录 | 历史提交列表与完整批改报告回看，追踪复习进度 |
 
-## 样式方案
+---
 
-基于 tailwindcss 进行样式开发（底层基于 Uniwind）
+## 🧱 技术栈
 
-写法示例：
+- **前端**：Expo 54 + React Native + expo-router（底部 Tab 导航）+ TailwindCSS(Uniwind) + expo-image-picker
+- **后端**：Express.js（ES Module）+ Multer（文件上传）+ 豆包视觉大模型（答题卡识别与批改）+ S3 兼容对象存储（答题卡图片）
+- **持久化**：服务端 JSON 文件存储（题库 / 试卷 / 批改记录），开箱即用、无需额外数据库配置
 
-```tsx
-<View className="flex-1 bg-white dark:bg-gray-900 p-4"></View>
+---
+
+## 📁 目录结构
+
+```
+├── client/                     # React Native 前端
+│   ├── app/                    # Expo Router 路由（含底部 Tab）
+│   │   ├── _layout.tsx
+│   │   ├── (tabs)/             # 首页(题库) / 智能批改 / 记录
+│   │   ├── question-detail.tsx
+│   │   └── report.tsx
+│   ├── screens/                # 页面实现
+│   │   ├── home/               # 题库搜索
+│   │   ├── grade/              # 智能批改（选卷+传图）
+│   │   ├── records/            # 批改记录
+│   │   ├── report/             # 批改报告
+│   │   └── question-detail/
+│   ├── utils/api.ts            # 前端 API 封装
+│   └── global.css              # 主题设计令牌
+├── server/                     # Express 后端
+│   └── src/
+│       ├── index.ts            # 入口 & 路由挂载
+│       ├── routes/             # questions / papers / submissions
+│       ├── services/           # 对象存储、视觉 LLM 批改
+│       └── data/               # 题库/试卷/记录数据（JSON 持久化）
+└── package.json                # 根 workspace
 ```
 
-```tsx
-<Text
-  className="text-lg font-bold text-gray-900 dark:text-white"
-  selectionColorClassName="accent-blue-500"
->
-  Hello World
-</Text>
+---
+
+## 🚀 本地开发运行
+
+### 环境变量
+- 前端自动使用已注入的 `EXPO_PUBLIC_BACKEND_BASE_URL` 作为后端基址。
+- 后端需要对象存储与视觉模型凭据（由部署环境注入 `COZE_BUCKET_*` 等），本地 Mock 模式下可先验证题库等不依赖外部能力的功能。
+
+### 首次启动/重启前后端
+```bash
+coze dev
+```
+该命令会先杀掉占用端口的进程再启动前后端。
+
+### 分端启动
+```bash
+# 后端（Express，默认 9091）
+cd server && NODE_ENV=development pnpm run dev
+
+# 前端（Expo Web，默认 5000）
+cd client && npx expo start
 ```
 
-Uniwind 官方文档：https://docs.uniwind.dev/llms.txt
+---
 
-## 如何进行静态校验（TSC + ESLint）
+## 📱 部署到手机（真机体验）
+
+App 采用 Expo 技术栈，**无需 Xcode/Android Studio**，用实体手机即可体验：
+
+1. 手机安装 **Expo Go** App（App Store / 应用商店搜 “Expo Go”）。
+2. 电脑端运行 `npx expo start`，终端出现二维码。
+3. 手机上（与电脑同一局域网）：
+   - **iOS**：系统相机扫码 → 自动用 Expo Go 打开；
+   - **Android**：Expo Go 内点击 **Scan QR code** 扫码。
+4. 加载完成后即可使用三端一致的 App 界面。
+
+> 打包发布正式版（生成 .ipa/.apk）时，可运行 `npx expo run:ios` / `npx expo run:android` 或使用 EAS Build。
+
+---
+
+## 🔌 API 一览（前缀 `/api/v1`）
+
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| GET | `/api/v1/health` | 健康检查 |
+| GET | `/api/v1/questions/search?keyword=&type=&source=` | 题库搜索 |
+| GET | `/api/v1/questions/:id` | 题目详情 |
+| GET | `/api/v1/papers` | 可批改试卷列表 |
+| GET | `/api/v1/papers/:id` | 试卷详情（含各题分值） |
+| POST | `/api/v1/submissions` | 上传答题卡并触发批改（file + paperId + studentName） |
+| GET | `/api/v1/submissions` | 批改记录列表 |
+| GET | `/api/v1/submissions/:id` | 批改报告详情（异步轮询读取进度/结果） |
+
+---
+
+## 🧠 智能批改原理
+
+1. 用户在「智能批改」页选择一份试卷（每题含标准答案与分值）。
+2. 拍摄/选择答题卡图片，前端以 `FormData` 上传至后端。
+3. 后端将图片存入**对象存储**，生成访问 URL。
+4. 后端调用**豆包视觉大模型**：结合试卷题目、答案要点与答题卡图片，逐题识别学生作答并打分、点评，输出结构化结果。
+5. 记录以异步方式处理，前端轮询接口直至 `status = done`，再展示逐题得分与总分。
+
+> 客观题（单选/多选）由模型识别选项对照答案，材料/论述题由模型按要点赋分并给出点评。
+
+---
+
+## 🔒 安全与注意事项
+
+- 上传的答题卡图片默认仅用于批改，可接入对象存储访问控制做私有化。
+- 批改为 AI 辅助，**仅供参考**，重要测验建议结合人工复核。
+- 已配置的 API 均遵循 Express 静态路由优先于动态路由的正确顺序。
+
+---
+
+## 🛠 统计校验
 
 ```bash
-# 对 client 和 server 目录同时进行校验
+# 前端 + 后端 同时静态校验（TSC + ESLint）
 pnpm -w lint:all
-
-# 对 client 目录进行校验
-pnpm -w lint:client
-
-# 对 server 目录进行校验
-pnpm -w lint:server
 ```
 
-## 如何修改主题模式（跟随系统、固定暗色、固定亮色）
+---
 
-默认为跟随系统，如果用户明确指定为“暗色”或“亮色”，需要修改 `client/components/ColorSchemeUpdater.tsx` 的 `DEFAULT_THEME` 变量为合适的值
+## 🔗 仓库
 
-## 如何定制主题 design tokens
-
-当前项目的**设计系统**基于 tailwindcss 实现，核心入口文件为 `client/global.css`，如果需要定制主题，应该**阅读并修改 `client/global.css` 文件**
-
-## 路由及 Tab Bar 实现规范
-
-### 方案一：无 Tab Bar（Stack 导航）
-
-适用于线性流程应用，采用简化的目录结构：
-
-```
-client/app/
-├── _layout.tsx         # 根布局（Stack 导航配置）
-├── index.tsx           # 应用入口
-├── detail.tsx          # 详情页（通过 params 传递数据）
-└── +not-found.tsx      # 404 页面
-```
-
-**根布局配置** `client/app/_layout.tsx`：
-
-以下仅为代码片段供写法参考
-
-```tsx
-<Stack screenOptions={{ headerShown: false }}>
-  <Stack.Screen name="index" />
-  <Stack.Screen name="detail" />
-</Stack>
-```
-
-**应用入口** `client/app/index.tsx`：
-```tsx
-export { default } from "@/screens/home";
-```
-> **禁止事项**：无 Tab Bar 场景下，不得创建 `(tabs)` 目录。
-
-### 方案二：有 Tab Bar（Tabs 导航）
-
-采用路由分组实现底部导航栏：
-```
-client/app/
-├── _layout.tsx              # 根布局
-├── (tabs)/
-│   ├── _layout.tsx          # Tab 导航配置
-│   ├── index.tsx            # 默认 Tab（必须存在）
-│   ├── discover.tsx         # 发现页
-│   └── profile.tsx          # 个人中心
-├── detail.tsx               # Tab 外的独立页面（通过 params 传递数据）
-└── +not-found.tsx
-```
-> **⚠️ [CRITICAL]**： `app/index.tsx` 优先级高于 `(tabs)/index.tsx`，会导致首页无 Tab Bar。**当有(tabs)/index.tsx时必须删除 `app/index.tsx`**。
-
-**根布局配置** `client/app/_layout.tsx`：
-
-以下仅为代码片段供写法参考
-
-```tsx
-<Stack screenOptions={{ headerShown: false }}>
-  <Stack.Screen name="(tabs)" />
-  <Stack.Screen name="detail" />
-</Stack>
-```
-
-**应用入口** `client/app/(tabs)/index.tsx`：
-```tsx
-export { default } from "@/screens/home";
-```
-
-**Tab 布局配置** `client/app/(tabs)/_layout.tsx`：
-
-```tsx
-import { Tabs } from 'expo-router';
-import { Platform } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { FontAwesome6 } from '@expo/vector-icons';
-import { useCSSVariable } from 'uniwind';
-
-export default function TabLayout() {
-  const insets = useSafeAreaInsets();
-  const [background, muted, accent, border] = useCSSVariable([
-    '--color-background',
-    '--color-muted',
-    '--color-accent',
-    '--color-border',
-  ]) as string[];
-
-  let tabBarStyle = {
-    backgroundColor: background,
-    borderTopWidth: 1,
-    borderTopColor: border,
-  };
-
-  // 用于修复 Web 上高度异常的问题（这个 if 逻辑必须添加）
-  if (Platform.OS === 'web') {
-    tabBarStyle = {
-      ...tabBarStyle,
-      height: 'auto',
-    }
-  }
-
-  return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarStyle,
-        tabBarActiveTintColor: accent,
-        tabBarInactiveTintColor: muted,
-      }}
-    >
-      {/* name 必须与文件名完全一致 */}
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: '首页',
-          tabBarIcon: ({ color }) => (
-            <FontAwesome6 name="house" size={20} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="discover"
-        options={{
-          title: '发现',
-          tabBarIcon: ({ color }) => (
-            <FontAwesome6 name="compass" size={20} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: '我的',
-          tabBarIcon: ({ color }) => (
-            <FontAwesome6 name="user" size={20} color={color} />
-          ),
-        }}
-      />
-    </Tabs>
-  );
-}
-```
-
-**Tab 页面文件** `client/app/(tabs)/index.tsx`：
-```tsx
-export { default } from "@/screens/home";
-```
-
-### 注意事项
-
-在改动 `client/app/_layout.tsx` 前，必须先阅读该文件，再进行修改操作
-
-以下是需要保留的重要逻辑
-
-- 保留 global.css 引入（tailwindcss 生效的关键）
-- 保留 Provider 的使用
-
-## 依赖管理与模块导入规范
-
-### 依赖安装
-**禁止**使用 `npm` 或 `yarn`，按目录区分安装命令：
-
-| 目录 | 安装命令 | 说明 |
-|------|----------|------|
-| `client/` | `npx expo install <package>` | Expo 会自动选择与 SDK 兼容的版本 |
-| `server/` | `pnpm add <package>` | 使用 pnpm 管理后端依赖 |
-
-```bash
-# client 目录（Expo 项目）
-cd client && npx expo install expo-camera expo-image-picker
-
-# server 目录（Express 项目）
-cd server && pnpm add axios cors
-```
-
-**网络问题处理**：`npx expo install` 可能因网络原因失败，失败时重试 2 次，仍失败则改用 `pnpm add` 安装
-
-## Expo 开发规范
-
-### 路径别名
-
-Expo 配置了 `@/` 路径别名指向 `client/` 目录：
-
-```tsx
-// 正确
-import { Screen } from '@/components/Screen';
-
-// 避免相对路径
-import { Screen } from '../../../components/Screen';
-```
-
-## 本地开发
-
-`coze-dev dev`：用来首次启动前后端服务，也可以用来重启前后端服务（该命令会先尝试杀掉占用端口的进程，再启动服务）
+GitHub：https://github.com/HSG111/history-exam-app

@@ -45,15 +45,8 @@ function rowToQuestion(row: QuestionRow): Question {
   };
 }
 
-/** 若题库为空，则写入种子题目与试卷 */
-export async function ensureSeeded(): Promise<void> {
-  const { count, error: countErr } = await supabase
-    .from('questions')
-    .select('id', { count: 'exact', head: true });
-  if (countErr) throw countErr;
-  if (count && count > 0) return;
-
-  const qRows = QUESTIONS.map((q) => ({
+function toQuestionRow(q: Question) {
+  return {
     id: q.id,
     type: q.type,
     stem: q.stem,
@@ -65,19 +58,52 @@ export async function ensureSeeded(): Promise<void> {
     topic: q.topic,
     difficulty: String(q.difficulty),
     max_points: q.maxPoints,
-  }));
+  };
+}
 
-  const pRows = PAPERS.map((p) => ({
+/** upsert 单条/多条题目（按 id 覆盖），用于导入 */
+export async function upsertQuestions(questions: Question[]): Promise<number> {
+  if (!questions.length) return 0;
+  const rows = questions.map(toQuestionRow);
+  const { error } = await supabase
+    .from('questions')
+    .upsert(rows, { onConflict: 'id' });
+  if (error) throw error;
+  return rows.length;
+}
+
+export interface PaperInput {
+  id: string;
+  title: string;
+  source: string;
+  questionIds: string[];
+}
+
+/** upsert 试卷（按 id 覆盖） */
+export async function upsertPapers(papers: PaperInput[]): Promise<number> {
+  if (!papers.length) return 0;
+  const rows = papers.map((p) => ({
     id: p.id,
     title: p.title,
     source: p.source,
     questions: p.questionIds,
   }));
+  const { error } = await supabase.from('papers').upsert(rows, { onConflict: 'id' });
+  if (error) throw error;
+  return rows.length;
+}
 
-  const { error: qErr } = await supabase.from('questions').insert(qRows);
-  if (qErr) throw qErr;
-  const { error: pErr } = await supabase.from('papers').insert(pRows);
-  if (pErr) throw pErr;
+/** 每次启动幂等写入种子题目与试卷（新增/覆盖） */
+export async function ensureSeeded(): Promise<void> {
+  await upsertQuestions(QUESTIONS);
+  await upsertPapers(
+    PAPERS.map((p) => ({
+      id: p.id,
+      title: p.title,
+      source: p.source,
+      questionIds: p.questionIds,
+    }))
+  );
 }
 
 /** 根据 id 列表批量查询题目（保持传入顺序） */

@@ -4,6 +4,7 @@ import cors from "cors";
 import questionsRouter from "./routes/questions";
 import papersRouter from "./routes/papers";
 import submissionsRouter from "./routes/submissions";
+import importRouter from "./routes/import";
 import { ensureSeeded } from "./services/db";
 
 const app = express();
@@ -22,6 +23,7 @@ app.get('/api/v1/health', (_req, res) => {
 app.use('/api/v1/questions', questionsRouter);
 app.use('/api/v1/papers', papersRouter);
 app.use('/api/v1/submissions', submissionsRouter);
+app.use('/api/v1', importRouter);
 
 // 统一错误处理
 app.use((err: any, _req: any, res: any, _next: any) => {

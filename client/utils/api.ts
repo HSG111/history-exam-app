@@ -144,6 +144,24 @@ export async function createSubmission(params: {
   return handle(res);
 }
 
+type ImportQuestion = Partial<Question> & Pick<Question, 'type' | 'stem' | 'answer'>;
+
+/**
+ * 服务端文件：server/src/routes/import.ts
+ * 接口：POST /api/v1/import/questions
+ * Body：questions: Array<{ type, stem, options?, answer, analysis?, source?, topic?, difficulty?, maxPoints? }>
+ */
+export async function importQuestions(
+  questions: ImportQuestion[]
+): Promise<{ ok: boolean; imported: number }> {
+  const res = await fetch(`${API_BASE}/api/v1/import/questions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ questions }),
+  });
+  return handle(res);
+}
+
 // 类型映射
 export const TYPE_LABEL: Record<string, string> = {
   single: '单选',

@@ -141,6 +141,18 @@ export default function HomeScreen() {
             );
           })}
         </View>
+
+        {/* 录入 / 批量导入 */}
+        <TouchableOpacity
+          onPress={() => router.push('/import')}
+          className="mt-3 flex-row items-center justify-center py-2.5 rounded-xl"
+          style={{ backgroundColor: 'rgba(79,70,229,0.08)' }}
+        >
+          <FontAwesome6 name="plus" size={13} color="#4f46e5" />
+          <Text className="ml-1.5 text-sm font-semibold" style={{ color: '#4f46e5' }}>
+            录入 / 批量导入题目
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {loading ? (

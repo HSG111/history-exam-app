@@ -1,8 +1,10 @@
+import 'dotenv/config';
 import express from "express";
 import cors from "cors";
 import questionsRouter from "./routes/questions";
 import papersRouter from "./routes/papers";
 import submissionsRouter from "./routes/submissions";
+import { ensureSeeded } from "./services/db";
 
 const app = express();
 const port = process.env.PORT || 9091;
@@ -29,4 +31,8 @@ app.use((err: any, _req: any, res: any, _next: any) => {
 
 app.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}/`);
+  // 启动时确保题库种子数据已写入 Supabase
+  ensureSeeded()
+    .then(() => console.log('[supabase] connected & seeded'))
+    .catch((err) => console.error('[supabase] seed error:', err));
 });

@@ -18,7 +18,7 @@
 
 - **前端**：Expo 54 + React Native + expo-router（底部 Tab 导航）+ TailwindCSS(Uniwind) + expo-image-picker
 - **后端**：Express.js（ES Module）+ Multer（文件上传）+ 豆包视觉大模型（答题卡识别与批改）+ S3 兼容对象存储（答题卡图片）
-- **持久化**：服务端 JSON 文件存储（题库 / 试卷 / 批改记录），开箱即用、无需额外数据库配置
+- **持久化**：Supabase（PostgreSQL）云数据库（题库 questions / 试卷 papers / 批改记录 submissions，含行级安全 RLS）
 
 ---
 
@@ -43,8 +43,8 @@
 │   └── src/
 │       ├── index.ts            # 入口 & 路由挂载
 │       ├── routes/             # questions / papers / submissions
-│       ├── services/           # 对象存储、视觉 LLM 批改
-│       └── data/               # 题库/试卷/记录数据（JSON 持久化）
+│       ├── services/           # 对象存储、视觉 LLM 批改、Supabase db
+│       └── data/               # 题库/试卷种子数据（seed）
 └── package.json                # 根 workspace
 ```
 
@@ -70,6 +70,20 @@ cd server && NODE_ENV=development pnpm run dev
 # 前端（Expo Web，默认 5000）
 cd client && npx expo start
 ```
+
+### Supabase 数据库接入
+
+题库 / 试卷 / 批改记录持久化在 **Supabase**（PostgreSQL）。接入方式：
+
+1. 在 Supabase 控制台创建项目，建三张表：`questions`、`papers`、`submissions`，并配置行级安全策略（已按本项目字段与演示环境权限建表）。
+2. 把后端所需配置写入 **`server/.env`**（该文件已被 gitignore，密钥不会入库）：
+   ```bash
+   SUPABASE_URL=https://你的项目ref.supabase.co
+   SUPABASE_ANON_KEY=你的anon或publishable key
+   ```
+3. 后端启动时若题库为空会自动写入种子数据（`server/src/data/seed.ts`）。
+
+> 正式上线建议改用 `service_role` 密钥并在 Supabase 收紧 RLS、把 anon 权限降为只读，避免数据被任意修改。
 
 ---
 

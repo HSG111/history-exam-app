@@ -22,7 +22,9 @@ export default function RootLayout() {
           headerShown: false
         }}
       >
-        <Stack.Screen name="index" options={{ title: "" }} />
+        <Stack.Screen name="(tabs)" options={{ title: "" }} />
+        <Stack.Screen name="question-detail" options={{ title: "" }} />
+        <Stack.Screen name="report" options={{ title: "" }} />
       </Stack>
       <Toast />
     </Provider>
